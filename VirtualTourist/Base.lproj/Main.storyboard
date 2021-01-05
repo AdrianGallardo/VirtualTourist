@@ -50,6 +50,9 @@
                                 <subviews>
                                     <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="t1D-As-YCf">
                                         <rect key="frame" x="0.0" y="0.0" width="428" height="254.66666666666666"/>
+                                        <connections>
+                                            <outlet property="delegate" destination="CPl-So-0qh" id="aCL-OI-n0R"/>
+                                        </connections>
                                     </mapView>
                                     <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="S1d-1Q-pOV">
                                         <rect key="frame" x="0.0" y="254.66666666666669" width="428" height="593.33333333333326"/>
@@ -79,14 +82,22 @@
                                     <constraint firstItem="S1d-1Q-pOV" firstAttribute="height" secondItem="tCf-lC-LoR" secondAttribute="height" multiplier="0.699686" id="aH2-f1-rcO"/>
                                 </constraints>
                             </stackView>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="HfB-Oj-0Qk">
+                                <rect key="frame" x="16" y="846" width="396" height="30"/>
+                                <state key="normal" title="New Collection"/>
+                            </button>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="HPL-gM-nmg"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
+                            <constraint firstItem="HfB-Oj-0Qk" firstAttribute="centerX" secondItem="HPL-gM-nmg" secondAttribute="centerX" id="Hs6-Ph-VTh"/>
                             <constraint firstItem="tCf-lC-LoR" firstAttribute="top" secondItem="HPL-gM-nmg" secondAttribute="top" id="K5J-Py-hgi"/>
                             <constraint firstItem="tCf-lC-LoR" firstAttribute="bottom" secondItem="HPL-gM-nmg" secondAttribute="bottom" id="Lxi-re-pcK"/>
                             <constraint firstItem="tCf-lC-LoR" firstAttribute="trailing" secondItem="HPL-gM-nmg" secondAttribute="trailing" id="PvX-Ci-t5L"/>
                             <constraint firstItem="tCf-lC-LoR" firstAttribute="leading" secondItem="HPL-gM-nmg" secondAttribute="leading" id="nRn-Qs-29P"/>
+                            <constraint firstItem="HfB-Oj-0Qk" firstAttribute="leading" secondItem="HPL-gM-nmg" secondAttribute="leading" constant="16" id="oZ3-3b-s9L"/>
+                            <constraint firstItem="HPL-gM-nmg" firstAttribute="bottom" secondItem="HfB-Oj-0Qk" secondAttribute="bottom" constant="16" id="tbs-LA-qJ4"/>
+                            <constraint firstItem="HPL-gM-nmg" firstAttribute="trailing" secondItem="HfB-Oj-0Qk" secondAttribute="trailing" constant="16" id="xjc-FQ-pBl"/>
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" id="Mbn-Zd-jEh"/>

@@ -49,6 +49,7 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate {
 			if let photoAlbumVC = self.storyboard!.instantiateViewController(withIdentifier: "PhotoAlbumViewController")
 					as? PhotoAlbumViewController {
 				self.navigationController!.pushViewController(photoAlbumVC, animated: true)
+
 			}
 		}
 	}
