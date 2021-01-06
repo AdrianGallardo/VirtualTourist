@@ -13,8 +13,8 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate {
 
 	override func viewDidLoad() {
 		var annotations = [MKPointAnnotation]()
-		let coordinate = CLLocationCoordinate2D(latitude: CLLocationDegrees(19.312551),
-																						longitude: CLLocationDegrees(-99.077818))
+		let coordinate = CLLocationCoordinate2D(latitude: CLLocationDegrees(51.056085),
+																						longitude: CLLocationDegrees(21.035900))
 		let annotation = MKPointAnnotation()
 		annotation.title = "Titulo"
 		annotation.subtitle = "Subtitulo"
@@ -48,8 +48,8 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate {
 		if control == view.rightCalloutAccessoryView {
 			if let photoAlbumVC = self.storyboard!.instantiateViewController(withIdentifier: "PhotoAlbumViewController")
 					as? PhotoAlbumViewController {
+				photoAlbumVC.coordinate = view.annotation?.coordinate
 				self.navigationController!.pushViewController(photoAlbumVC, animated: true)
-
 			}
 		}
 	}

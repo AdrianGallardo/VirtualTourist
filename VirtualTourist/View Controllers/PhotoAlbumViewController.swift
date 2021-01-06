@@ -13,9 +13,6 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate {
 	var coordinate: CLLocationCoordinate2D?
 
 	override func viewDidLoad() {
-		self.coordinate = CLLocationCoordinate2D(latitude: CLLocationDegrees(19.312551),
-																							longitude: CLLocationDegrees(-99.077818))
-
 		let annotation = MKPointAnnotation()
 		annotation.title = "Titulo"
 		annotation.subtitle = "Subtitulo"
