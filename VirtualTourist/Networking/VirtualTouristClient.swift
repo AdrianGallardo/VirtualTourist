@@ -19,6 +19,21 @@ class VirtualTouristClient {
 		}
 	}
 
+	class func downloadImage(server: String, id: String, secret: String, format: String, completion: @escaping (Data?, Error?) -> Void) {
+		guard let url = Endpoints.downloadImage(server, id, secret, format).url else {
+			print("Error URL image")
+			return
+		}
+		let imageTask = URLSession.shared.dataTask(with: url) { (data, response, error) in
+			DispatchQueue.main.async {
+				completion(data, error)
+			}
+		}
+
+		imageTask.resume()
+	}
+
+
 	//MARK: - GET Task
 	class func taskForGETRequest<ResponseType: Decodable>(url: URL?, response: ResponseType.Type, completion: @escaping (ResponseType?, Error?) -> Void) {
 
@@ -43,11 +58,13 @@ class VirtualTouristClient {
 
 			let decoder = JSONDecoder()
 			do {
+				print("decode")
 				let responseObject = try decoder.decode(ResponseType.self, from: data)
 				DispatchQueue.main.async {
 					completion(responseObject, nil)
 				}
 			} catch {
+				print("client taskForGETRequest: " +  error.localizedDescription)
 				DispatchQueue.main.async {
 					completion(nil, error)
 				}
@@ -62,15 +79,17 @@ class VirtualTouristClient {
 		static var apiKey = "c5b24e42ffd0cb3602dde89411e584e9"
 		static let apiUrl = "https://api.flickr.com/services/rest/"
 		static let photoUrl = "https://live.staticflickr.com/"
+		static let photosPerPage = 45
+		static let searchRadiusKM = 1
 
 		case getPhotos(Double, Double, Int)
-		case getImage(String, String, String, String)
+		case downloadImage(String, String, String, String)
 
 		var stringValue: String {
 			switch self {
 			case .getPhotos(let latitude, let longitude, let page):
-				return "\(Endpoints.apiUrl)?method=flickr.photos.search&format=json&api_key=\(Endpoints.apiKey)&lat=\(latitude)&lon=\(longitude)&radius=10&page=\(page)&per_page=15"
-			case .getImage(let server, let id, let secret, let format):
+				return "\(Endpoints.apiUrl)?method=flickr.photos.search&format=json&api_key=\(Endpoints.apiKey)&lat=\(latitude)&lon=\(longitude)&radius=\(Endpoints.searchRadiusKM)&page=\(page)&per_page=\(Endpoints.photosPerPage)&nojsoncallback=1"
+			case .downloadImage(let server, let id, let secret, let format):
 				return "\(Endpoints.photoUrl)\(server)/\(id)_\(secret)_\(format).jpg"
 			}
 		}

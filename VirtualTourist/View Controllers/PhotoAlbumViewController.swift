@@ -7,10 +7,16 @@
 
 import Foundation
 import MapKit
+import UIKit
 
-class PhotoAlbumViewController: UIViewController, MKMapViewDelegate {
+class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectionViewDataSource, UICollectionViewDelegate {
 	@IBOutlet weak var mapView: MKMapView!
+	@IBOutlet weak var newCollectionButton: UIButton!
+	@IBOutlet weak var photoAlbumCollectionView: UICollectionView!
+	@IBOutlet weak var flowLayout: UICollectionViewFlowLayout!
+
 	var coordinate: CLLocationCoordinate2D?
+	var photos: Photos?
 
 	override func viewDidLoad() {
 		let annotation = MKPointAnnotation()
@@ -22,7 +28,14 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate {
 
 		mapView.addAnnotation(annotation)
 		mapView.setRegion(region, animated: true)
-		
+
+		let space:CGFloat = 2.0
+		let dimensionW = (view.frame.size.width - (2 * space)) / 3.0
+		let dimensionH = (view.frame.size.height - space) / 7.0
+
+		flowLayout.minimumInteritemSpacing = space
+		flowLayout.minimumLineSpacing = space
+		flowLayout.itemSize = CGSize(width: dimensionW, height: dimensionH)
 	}
 
 	// MARK: - MKMapViewDelegate
@@ -41,4 +54,38 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate {
 
 		return pinView
 	}
+
+	// MARK: - UICollectionViewDataSource
+	func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+		return self.photos?.photo.count ?? 0
+	}
+
+	func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+		let imageSize = "s"
+		let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PhotoAlbumCollectionViewCell", for: indexPath) as! PhotoAlbumCollectionViewCell
+		let photoImage = photos?.photo[indexPath.row]
+
+		cell.imageView?.image = UIImage(named: "PosterPlaceholder")
+
+		if let photoImage = photoImage {
+			VirtualTouristClient.downloadImage(server: photoImage.server, id: photoImage.id, secret: photoImage.secret, format: imageSize, completion: { (data, error) in
+				guard let data = data else {
+					return
+				}
+
+				let image = UIImage(data: data)
+				cell.imageView?.image = image
+				cell.setNeedsLayout()
+			})
+		}
+		return cell
+	}
+
+	func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath:IndexPath) {
+
+	}
+}
+
+class PhotoAlbumCollectionViewCell: UICollectionViewCell {
+	@IBOutlet weak var imageView: UIImageView!
 }

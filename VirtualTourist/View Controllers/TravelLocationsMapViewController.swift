@@ -10,11 +10,13 @@ import MapKit
 
 class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate {
   @IBOutlet weak var mapView: MKMapView!
+	var photos: Photos?
 
 	override func viewDidLoad() {
 		var annotations = [MKPointAnnotation]()
-		let coordinate = CLLocationCoordinate2D(latitude: CLLocationDegrees(51.056085),
-																						longitude: CLLocationDegrees(21.035900))
+		let coordinate = CLLocationCoordinate2D(latitude: CLLocationDegrees(19.357429),
+																						longitude: CLLocationDegrees(-99.270616))
+		
 		let annotation = MKPointAnnotation()
 		annotation.title = "Titulo"
 		annotation.subtitle = "Subtitulo"
@@ -22,6 +24,16 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate {
 		annotations.append(annotation)
 
 		mapView.addAnnotations(annotations)
+
+		VirtualTouristClient.getPhotos(latitude: annotation.coordinate.latitude, longitude: annotation.coordinate.longitude, page: 1) { (photoSearch, error) in
+			guard let photoSearch = photoSearch else {
+				print(String(reflecting: error))
+				return
+			}
+
+			self.photos = photoSearch.photos
+
+		}
   }
 
 	// MARK: - MKMapViewDelegate
@@ -49,6 +61,7 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate {
 			if let photoAlbumVC = self.storyboard!.instantiateViewController(withIdentifier: "PhotoAlbumViewController")
 					as? PhotoAlbumViewController {
 				photoAlbumVC.coordinate = view.annotation?.coordinate
+				photoAlbumVC.photos = self.photos
 				self.navigationController!.pushViewController(photoAlbumVC, animated: true)
 			}
 		}

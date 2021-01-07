@@ -5,7 +5,6 @@
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="17126"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="System colors in document resources" minToolsVersion="11.0"/>
-        <capability name="collection view cell content view" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -58,21 +57,44 @@
                                         <rect key="frame" x="0.0" y="254.66666666666669" width="428" height="593.33333333333326"/>
                                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                                         <collectionViewFlowLayout key="collectionViewLayout" automaticEstimatedItemSize="YES" minimumLineSpacing="10" minimumInteritemSpacing="10" id="a7Z-UZ-Q4m">
-                                            <size key="itemSize" width="128" height="128"/>
+                                            <size key="itemSize" width="100" height="100"/>
                                             <size key="headerReferenceSize" width="0.0" height="0.0"/>
                                             <size key="footerReferenceSize" width="0.0" height="0.0"/>
                                             <inset key="sectionInset" minX="0.0" minY="0.0" maxX="0.0" maxY="0.0"/>
                                         </collectionViewFlowLayout>
                                         <cells>
-                                            <collectionViewCell opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" id="fPR-bd-zWa">
-                                                <rect key="frame" x="0.0" y="0.0" width="128" height="128"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                                <collectionViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" id="z7n-ex-D5t">
-                                                    <rect key="frame" x="0.0" y="0.0" width="128" height="128"/>
+                                            <collectionViewCell opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" restorationIdentifier="PhotoAlbumCollectionViewCell" reuseIdentifier="PhotoAlbumCollectionViewCell" id="DlT-5s-Qfr" customClass="PhotoAlbumCollectionViewCell" customModule="VirtualTourist" customModuleProvider="target">
+                                                <rect key="frame" x="0.0" y="0.0" width="100" height="100"/>
+                                                <autoresizingMask key="autoresizingMask"/>
+                                                <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
+                                                    <rect key="frame" x="0.0" y="0.0" width="100" height="100"/>
                                                     <autoresizingMask key="autoresizingMask"/>
-                                                </collectionViewCellContentView>
+                                                    <subviews>
+                                                        <imageView userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="1bt-x3-jTM">
+                                                            <rect key="frame" x="16" y="16" width="68" height="68"/>
+                                                            <constraints>
+                                                                <constraint firstAttribute="height" constant="64" id="W2M-xO-Ucm" userLabel="height = 75"/>
+                                                                <constraint firstAttribute="width" constant="80" id="jle-3V-I50" userLabel="width = 75"/>
+                                                            </constraints>
+                                                        </imageView>
+                                                    </subviews>
+                                                </view>
+                                                <constraints>
+                                                    <constraint firstAttribute="bottom" secondItem="1bt-x3-jTM" secondAttribute="bottom" constant="16" id="ebM-KX-wVy"/>
+                                                    <constraint firstItem="1bt-x3-jTM" firstAttribute="top" secondItem="DlT-5s-Qfr" secondAttribute="top" constant="16" id="exp-jE-rfG"/>
+                                                    <constraint firstAttribute="trailing" secondItem="1bt-x3-jTM" secondAttribute="trailing" constant="16" id="hZs-8b-ueS"/>
+                                                    <constraint firstItem="1bt-x3-jTM" firstAttribute="leading" secondItem="DlT-5s-Qfr" secondAttribute="leading" constant="16" id="zTA-QE-if5"/>
+                                                </constraints>
+                                                <size key="customSize" width="100" height="100"/>
+                                                <connections>
+                                                    <outlet property="imageView" destination="1bt-x3-jTM" id="bTw-bf-OS3"/>
+                                                </connections>
                                             </collectionViewCell>
                                         </cells>
+                                        <connections>
+                                            <outlet property="dataSource" destination="CPl-So-0qh" id="YdR-2o-qSQ"/>
+                                            <outlet property="delegate" destination="CPl-So-0qh" id="F4M-ss-TXJ"/>
+                                        </connections>
                                     </collectionView>
                                 </subviews>
                                 <constraints>
@@ -83,7 +105,7 @@
                                 </constraints>
                             </stackView>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="HfB-Oj-0Qk">
-                                <rect key="frame" x="16" y="846" width="396" height="30"/>
+                                <rect key="frame" x="162" y="846" width="104" height="30"/>
                                 <state key="normal" title="New Collection"/>
                             </button>
                         </subviews>
@@ -95,19 +117,20 @@
                             <constraint firstItem="tCf-lC-LoR" firstAttribute="bottom" secondItem="HPL-gM-nmg" secondAttribute="bottom" id="Lxi-re-pcK"/>
                             <constraint firstItem="tCf-lC-LoR" firstAttribute="trailing" secondItem="HPL-gM-nmg" secondAttribute="trailing" id="PvX-Ci-t5L"/>
                             <constraint firstItem="tCf-lC-LoR" firstAttribute="leading" secondItem="HPL-gM-nmg" secondAttribute="leading" id="nRn-Qs-29P"/>
-                            <constraint firstItem="HfB-Oj-0Qk" firstAttribute="leading" secondItem="HPL-gM-nmg" secondAttribute="leading" constant="16" id="oZ3-3b-s9L"/>
                             <constraint firstItem="HPL-gM-nmg" firstAttribute="bottom" secondItem="HfB-Oj-0Qk" secondAttribute="bottom" constant="16" id="tbs-LA-qJ4"/>
-                            <constraint firstItem="HPL-gM-nmg" firstAttribute="trailing" secondItem="HfB-Oj-0Qk" secondAttribute="trailing" constant="16" id="xjc-FQ-pBl"/>
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" id="Mbn-Zd-jEh"/>
                     <connections>
+                        <outlet property="flowLayout" destination="a7Z-UZ-Q4m" id="crW-wJ-uMH"/>
                         <outlet property="mapView" destination="t1D-As-YCf" id="xkU-8s-yKq"/>
+                        <outlet property="newCollectionButton" destination="HfB-Oj-0Qk" id="zyM-7X-tuG"/>
+                        <outlet property="photoAlbumCollectionView" destination="S1d-1Q-pOV" id="7hU-X0-Dva"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="hms-6U-XXx" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="852" y="75"/>
+            <point key="canvasLocation" x="850.93457943925227" y="74.514038876889856"/>
         </scene>
         <!--Navigation Controller-->
         <scene sceneID="59g-Dc-60O">

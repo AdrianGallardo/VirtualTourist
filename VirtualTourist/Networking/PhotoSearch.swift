@@ -23,8 +23,8 @@ struct Photos: Codable {
 	let page: Int
 	let pages: Int
 	let perpage: Int
-	let total: Int
-	let photos: [FlickrPhoto]
+	let total: String
+	let photo: [FlickrPhoto]
 }
 
 struct PhotoSearch: Codable {
