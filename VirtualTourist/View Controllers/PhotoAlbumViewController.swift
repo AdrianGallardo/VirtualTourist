@@ -14,14 +14,19 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 	@IBOutlet weak var newCollectionButton: UIButton!
 	@IBOutlet weak var photoAlbumCollectionView: UICollectionView!
 	@IBOutlet weak var flowLayout: UICollectionViewFlowLayout!
+	@IBOutlet weak var labelView: UIView!
+	@IBOutlet weak var activityView: UIView!
+	@IBOutlet weak var activityIndicator: UIActivityIndicatorView!
 
 	var coordinate: CLLocationCoordinate2D?
 	var photos: Photos?
+	var page = 1
+	var totalPages = 0
 
 	override func viewDidLoad() {
+		mapView.isUserInteractionEnabled = false
+		
 		let annotation = MKPointAnnotation()
-		annotation.title = "Titulo"
-		annotation.subtitle = "Subtitulo"
 		annotation.coordinate = coordinate!
 		let region = MKCoordinateRegion(center: annotation.coordinate,
 																		span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01))
@@ -36,6 +41,46 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 		flowLayout.minimumInteritemSpacing = space
 		flowLayout.minimumLineSpacing = space
 		flowLayout.itemSize = CGSize(width: dimensionW, height: dimensionH)
+
+		if let total = photos?.total, let pages = photos?.pages {
+			if total == "0" {
+				labelView.isHidden = false
+				newCollectionButton.isEnabled = false
+			} else {
+				labelView.isHidden = true
+				newCollectionButton.isEnabled = true
+				self.totalPages = pages
+			}
+		}
+
+		photoAlbumCollectionView.reloadData()
+	}
+
+	@IBAction func newCollection(_ sender: Any) {
+		newCollectionButton.isEnabled = false
+		activityView.isHidden = false
+		activityIndicator.startAnimating()
+
+		if self.page >= self.totalPages {
+			self.page = 1
+		} else {
+			self.page = self.page + 1
+		}
+		guard let latitude = coordinate?.latitude, let longitude = coordinate?.longitude else {
+			return
+		}
+		VirtualTouristClient.getPhotos(latitude: latitude, longitude: longitude, page: self.page) { (photoSearch, error) in
+			guard let photoSearch = photoSearch else {
+				print(String(reflecting: error))
+				return
+			}
+
+			self.photos = photoSearch.photos
+			self.newCollectionButton.isEnabled = true
+			self.activityView.isHidden = true
+			self.activityIndicator.stopAnimating()
+			self.photoAlbumCollectionView.reloadData()
+		}
 	}
 
 	// MARK: - MKMapViewDelegate
@@ -64,8 +109,6 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 		let imageSize = "s"
 		let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PhotoAlbumCollectionViewCell", for: indexPath) as! PhotoAlbumCollectionViewCell
 		let photoImage = photos?.photo[indexPath.row]
-
-		cell.imageView?.image = UIImage(named: "PosterPlaceholder")
 
 		if let photoImage = photoImage {
 			VirtualTouristClient.downloadImage(server: photoImage.server, id: photoImage.id, secret: photoImage.secret, format: imageSize, completion: { (data, error) in

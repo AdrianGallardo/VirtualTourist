@@ -8,32 +8,16 @@
 import Foundation
 import MapKit
 
-class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate {
+class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognizerDelegate {
   @IBOutlet weak var mapView: MKMapView!
 	var photos: Photos?
-
+	
 	override func viewDidLoad() {
-		var annotations = [MKPointAnnotation]()
-		let coordinate = CLLocationCoordinate2D(latitude: CLLocationDegrees(19.357429),
-																						longitude: CLLocationDegrees(-99.270616))
-		
-		let annotation = MKPointAnnotation()
-		annotation.title = "Titulo"
-		annotation.subtitle = "Subtitulo"
-		annotation.coordinate = coordinate
-		annotations.append(annotation)
-
-		mapView.addAnnotations(annotations)
-
-		VirtualTouristClient.getPhotos(latitude: annotation.coordinate.latitude, longitude: annotation.coordinate.longitude, page: 1) { (photoSearch, error) in
-			guard let photoSearch = photoSearch else {
-				print(String(reflecting: error))
-				return
-			}
-
-			self.photos = photoSearch.photos
-
-		}
+		let longpressRecognizer = UILongPressGestureRecognizer(target: self, action:#selector(self.handleLongPress))
+		longpressRecognizer.minimumPressDuration = 1
+		longpressRecognizer.delaysTouchesBegan = true
+		longpressRecognizer.delegate = self
+		mapView.addGestureRecognizer(longpressRecognizer)
   }
 
 	// MARK: - MKMapViewDelegate
@@ -65,5 +49,54 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate {
 				self.navigationController!.pushViewController(photoAlbumVC, animated: true)
 			}
 		}
+	}
+
+	@objc func handleLongPress(gestureRecognizer: UILongPressGestureRecognizer) {
+		if gestureRecognizer.state != UIGestureRecognizer.State.ended {
+			return
+		}
+		else if gestureRecognizer.state != UIGestureRecognizer.State.began {
+			let mapCoordinate =  mapView.convert(gestureRecognizer.location(in: mapView), toCoordinateFrom: mapView)
+
+			let annotation = MKPointAnnotation()
+			annotation.coordinate = mapCoordinate
+
+			lookUpCurrentLocation(location: CLLocation(latitude: mapCoordinate.latitude, longitude: mapCoordinate.longitude)) { (placeMark) in
+				annotation.title = placeMark?.locality ?? "Unknown"
+			}
+
+			print(String(reflecting: annotation.title))
+			print(String(reflecting: annotation.coordinate))
+
+			mapView.addAnnotation(annotation)
+
+			VirtualTouristClient.getPhotos(latitude: annotation.coordinate.latitude, longitude: annotation.coordinate.longitude, page: 1) { (photoSearch, error) in
+				guard let photoSearch = photoSearch else {
+					print(String(reflecting: error))
+					return
+				}
+
+				self.photos = photoSearch.photos
+			}
+		}
+	}
+
+	func lookUpCurrentLocation(location: CLLocation, completionHandler: @escaping (CLPlacemark?) -> Void ) {
+		let geocoder = CLGeocoder()
+		geocoder.reverseGeocodeLocation(location, completionHandler: { (placemarks, error) in
+			if error == nil {
+				let firstLocation = placemarks?[0]
+				completionHandler(firstLocation)
+			} else {
+				completionHandler(nil)
+			}
+		})
+	}
+}
+
+private extension MKMapView {
+	func centerToLocation(_ location: CLLocation, regionRadius: CLLocationDistance = 1000) {
+		let coordinateRegion = MKCoordinateRegion(center: location.coordinate, latitudinalMeters: regionRadius, longitudinalMeters: regionRadius)
+		setRegion(coordinateRegion, animated: true)
 	}
 }
