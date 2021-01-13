@@ -18,6 +18,7 @@
 		7593D1142591A43500DD94ED /* TravelLocationsMapViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7593D1132591A43500DD94ED /* TravelLocationsMapViewController.swift */; };
 		7593D1192591A44900DD94ED /* PhotoAlbumViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7593D1182591A44900DD94ED /* PhotoAlbumViewController.swift */; };
 		75A4A0C525A3E0AF0006A690 /* VirtualTouristClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75A4A0C425A3E0AF0006A690 /* VirtualTouristClient.swift */; };
+		75DCE43325AF663D00A4D445 /* DataController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75DCE43225AF663D00A4D445 /* DataController.swift */; };
 		75E5EDD525A54345008BAE9B /* PhotoSearch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75E5EDD425A54345008BAE9B /* PhotoSearch.swift */; };
 /* End PBXBuildFile section */
 
@@ -56,6 +57,7 @@
 		7593D1132591A43500DD94ED /* TravelLocationsMapViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TravelLocationsMapViewController.swift; sourceTree = "<group>"; };
 		7593D1182591A44900DD94ED /* PhotoAlbumViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoAlbumViewController.swift; sourceTree = "<group>"; };
 		75A4A0C425A3E0AF0006A690 /* VirtualTouristClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VirtualTouristClient.swift; sourceTree = "<group>"; };
+		75DCE43225AF663D00A4D445 /* DataController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataController.swift; sourceTree = "<group>"; };
 		75E5EDD425A54345008BAE9B /* PhotoSearch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoSearch.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -88,6 +90,7 @@
 			isa = PBXGroup;
 			children = (
 				7527F69825927F0700B30A1C /* VirtualTourist.xcdatamodeld */,
+				75DCE43225AF663D00A4D445 /* DataController.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -299,6 +302,7 @@
 				7593D1142591A43500DD94ED /* TravelLocationsMapViewController.swift in Sources */,
 				75A4A0C525A3E0AF0006A690 /* VirtualTouristClient.swift in Sources */,
 				7593D0E32591A37100DD94ED /* SceneDelegate.swift in Sources */,
+				75DCE43325AF663D00A4D445 /* DataController.swift in Sources */,
 				75E5EDD525A54345008BAE9B /* PhotoSearch.swift in Sources */,
 				7593D1192591A44900DD94ED /* PhotoAlbumViewController.swift in Sources */,
 			);

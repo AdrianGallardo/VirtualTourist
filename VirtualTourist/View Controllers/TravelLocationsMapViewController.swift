@@ -7,10 +7,14 @@
 
 import Foundation
 import MapKit
+import CoreData
 
 class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognizerDelegate {
+
   @IBOutlet weak var mapView: MKMapView!
 	var photos: Photos?
+	var dataController: DataController!
+	var pins: [Pin] = []
 	
 	override func viewDidLoad() {
 		let longpressRecognizer = UILongPressGestureRecognizer(target: self, action:#selector(self.handleLongPress))
@@ -21,6 +25,21 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, UIG
 
 		if let initialRegion = UserDefaults.standard.object(forKey: "initialRegion") as? [Double] {
 			mapView.setRegion(setInitialRegion(initialRegion), animated: true)
+		}
+
+		let feechRequest: NSFetchRequest<Pin> = Pin.fetchRequest()
+		if let result = try? dataController.viewContext.fetch(feechRequest) {
+			pins = result
+
+			var annotations = [MKPointAnnotation]()
+			for pin in pins {
+				let annotation = MKPointAnnotation()
+				annotation.coordinate = CLLocationCoordinate2D(latitude: pin.latitude, longitude: pin.longitude)
+				annotation.title = pin.title
+				annotations.append(annotation)
+			}
+
+			mapView.addAnnotations(annotations)
 		}
   }
 
@@ -110,12 +129,5 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, UIG
 				completionHandler(nil)
 			}
 		})
-	}
-}
-
-private extension MKMapView {
-	func centerToLocation(_ location: CLLocation, regionRadius: CLLocationDistance = 1000) {
-		let coordinateRegion = MKCoordinateRegion(center: location.coordinate, latitudinalMeters: regionRadius, longitudinalMeters: regionRadius)
-		setRegion(coordinateRegion, animated: true)
 	}
 }
