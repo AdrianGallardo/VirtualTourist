@@ -125,7 +125,8 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 	}
 
 	func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath:IndexPath) {
-
+		photos?.photo.remove(at: indexPath.row)
+		photoAlbumCollectionView.reloadData()
 	}
 }
 

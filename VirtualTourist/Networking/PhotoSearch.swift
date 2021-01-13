@@ -24,7 +24,7 @@ struct Photos: Codable {
 	let pages: Int
 	let perpage: Int
 	let total: String
-	let photo: [FlickrPhoto]
+	var photo: [FlickrPhoto]
 }
 
 struct PhotoSearch: Codable {

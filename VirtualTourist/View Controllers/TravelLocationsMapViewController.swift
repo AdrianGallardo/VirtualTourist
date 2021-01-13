@@ -18,7 +18,23 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, UIG
 		longpressRecognizer.delaysTouchesBegan = true
 		longpressRecognizer.delegate = self
 		mapView.addGestureRecognizer(longpressRecognizer)
+
+		if let initialRegion = UserDefaults.standard.object(forKey: "initialRegion") as? [Double] {
+			mapView.setRegion(setInitialRegion(initialRegion), animated: true)
+		}
   }
+
+	override func viewWillDisappear(_ animated: Bool) {
+		print("saving region to User Defaults")
+		let initialRegion = [mapView.region.center.latitude, mapView.region.center.longitude, mapView.region.span.latitudeDelta, mapView.region.span.longitudeDelta]
+		UserDefaults.standard.set(initialRegion, forKey: "initialRegion")
+	}
+
+	func setInitialRegion(_ initialRegion: [Double]) -> MKCoordinateRegion {
+		let center = CLLocationCoordinate2D(latitude: initialRegion[0], longitude: initialRegion[1])
+		let span = MKCoordinateSpan(latitudeDelta: initialRegion[2], longitudeDelta: initialRegion[3])
+		return MKCoordinateRegion(center: center, span: span)
+	}
 
 	// MARK: - MKMapViewDelegate
 	func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
@@ -78,6 +94,9 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, UIG
 
 				self.photos = photoSearch.photos
 			}
+			print(mapView.region.span.latitudeDelta)
+			print(mapView.region.span.longitudeDelta)
+			print(mapView.center)
 		}
 	}
 
