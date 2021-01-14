@@ -27,6 +27,10 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, UIG
 			mapView.setRegion(setInitialRegion(initialRegion), animated: true)
 		}
 
+		loadPins()
+  }
+
+	func loadPins() {
 		let feechRequest: NSFetchRequest<Pin> = Pin.fetchRequest()
 		if let result = try? dataController.viewContext.fetch(feechRequest) {
 			pins = result
@@ -41,7 +45,22 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, UIG
 
 			mapView.addAnnotations(annotations)
 		}
-  }
+	}
+
+	func savePin(_ annotation: MKPointAnnotation) {
+		let pin = Pin(context: dataController.viewContext)
+		pin.latitude = annotation.coordinate.latitude
+		pin.longitude = annotation.coordinate.longitude
+		pin.title = annotation.title!
+
+		if dataController.viewContext.hasChanges {
+			do {
+				try dataController.viewContext.save()
+			} catch {
+				print(error.localizedDescription)
+			}
+		}
+	}
 
 	override func viewWillDisappear(_ animated: Bool) {
 		print("saving region to User Defaults")
@@ -98,12 +117,9 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, UIG
 
 			lookUpCurrentLocation(location: CLLocation(latitude: mapCoordinate.latitude, longitude: mapCoordinate.longitude)) { (placeMark) in
 				annotation.title = placeMark?.locality ?? "Unknown"
+				self.mapView.addAnnotation(annotation)
+				self.savePin(annotation)
 			}
-
-			print(String(reflecting: annotation.title))
-			print(String(reflecting: annotation.coordinate))
-
-			mapView.addAnnotation(annotation)
 
 			VirtualTouristClient.getPhotos(latitude: annotation.coordinate.latitude, longitude: annotation.coordinate.longitude, page: 1) { (photoSearch, error) in
 				guard let photoSearch = photoSearch else {
@@ -113,9 +129,6 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, UIG
 
 				self.photos = photoSearch.photos
 			}
-			print(mapView.region.span.latitudeDelta)
-			print(mapView.region.span.longitudeDelta)
-			print(mapView.center)
 		}
 	}
 
