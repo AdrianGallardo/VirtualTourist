@@ -23,12 +23,32 @@
                                     <outlet property="delegate" destination="BYZ-38-t0r" id="hyc-VI-luL"/>
                                 </connections>
                             </mapView>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="H5X-Yc-adp">
+                                <rect key="frame" x="0.0" y="88" width="428" height="804"/>
+                                <subviews>
+                                    <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" misplaced="YES" hidesWhenStopped="YES" animating="YES" style="large" translatesAutoresizingMaskIntoConstraints="NO" id="jW8-Ql-k0H">
+                                        <rect key="frame" x="204" y="392" width="20" height="20"/>
+                                    </activityIndicatorView>
+                                </subviews>
+                                <constraints>
+                                    <constraint firstItem="jW8-Ql-k0H" firstAttribute="centerY" secondItem="H5X-Yc-adp" secondAttribute="centerY" id="Nfb-Ao-dy0"/>
+                                    <constraint firstItem="jW8-Ql-k0H" firstAttribute="centerX" secondItem="H5X-Yc-adp" secondAttribute="centerX" id="YaQ-a1-EKV"/>
+                                </constraints>
+                            </view>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                        <constraints>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="H5X-Yc-adp" secondAttribute="trailing" id="07O-9v-8CD"/>
+                            <constraint firstItem="H5X-Yc-adp" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="Bfd-QB-xhC"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="H5X-Yc-adp" secondAttribute="bottom" id="WyA-W7-mpZ"/>
+                            <constraint firstItem="H5X-Yc-adp" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" id="iC4-sB-wLd"/>
+                        </constraints>
                     </view>
                     <navigationItem key="navigationItem" id="Fkp-md-cZz"/>
                     <connections>
+                        <outlet property="activityIndicator" destination="jW8-Ql-k0H" id="8jV-SN-MZT"/>
+                        <outlet property="activityView" destination="H5X-Yc-adp" id="R9N-Ru-BD6"/>
                         <outlet property="mapView" destination="34r-n6-0Mw" id="oxC-bd-BHR"/>
                     </connections>
                 </viewController>

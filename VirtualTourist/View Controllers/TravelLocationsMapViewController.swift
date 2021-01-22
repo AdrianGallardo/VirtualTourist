@@ -12,13 +12,18 @@ import CoreData
 class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, UIGestureRecognizerDelegate {
 
   @IBOutlet weak var mapView: MKMapView!
-	var photos: Photos?
+	@IBOutlet weak var activityIndicator: UIActivityIndicatorView!
+	@IBOutlet weak var activityView: UIView!
+
 	var dataController: DataController!
 	var pins: [Pin] = []
+	var photoAlbum: Photos?
 	
 	override func viewDidLoad() {
+		activityView.isHidden = true
+		activityIndicator.stopAnimating()
+
 		let longpressRecognizer = UILongPressGestureRecognizer(target: self, action:#selector(self.handleLongPress))
-		longpressRecognizer.minimumPressDuration = 1
 		longpressRecognizer.delaysTouchesBegan = true
 		longpressRecognizer.delegate = self
 		mapView.addGestureRecognizer(longpressRecognizer)
@@ -26,9 +31,11 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, UIG
 		if let initialRegion = UserDefaults.standard.object(forKey: "initialRegion") as? [Double] {
 			mapView.setRegion(setInitialRegion(initialRegion), animated: true)
 		}
-
-		loadPins()
   }
+
+	override func viewWillAppear(_ animated: Bool) {
+		loadPins()
+	}
 
 	func loadPins() {
 		let feechRequest: NSFetchRequest<Pin> = Pin.fetchRequest()
@@ -44,21 +51,6 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, UIG
 			}
 
 			mapView.addAnnotations(annotations)
-		}
-	}
-
-	func savePin(_ annotation: MKPointAnnotation) {
-		let pin = Pin(context: dataController.viewContext)
-		pin.latitude = annotation.coordinate.latitude
-		pin.longitude = annotation.coordinate.longitude
-		pin.title = annotation.title!
-
-		if dataController.viewContext.hasChanges {
-			do {
-				try dataController.viewContext.save()
-			} catch {
-				print(error.localizedDescription)
-			}
 		}
 	}
 
@@ -98,8 +90,25 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, UIG
 		if control == view.rightCalloutAccessoryView {
 			if let photoAlbumVC = self.storyboard!.instantiateViewController(withIdentifier: "PhotoAlbumViewController")
 					as? PhotoAlbumViewController {
-				photoAlbumVC.coordinate = view.annotation?.coordinate
-				photoAlbumVC.photos = self.photos
+
+				guard let latitude = view.annotation?.coordinate.latitude, let longitude = view.annotation?.coordinate.longitude else {
+					return
+				}
+
+				let fetchRequest: NSFetchRequest<Pin> = Pin.fetchRequest()
+				let latitudePredicate = NSPredicate(format: "latitude == %@", String(latitude))
+				let longitudePredicate = NSPredicate(format: "longitude == %@", String(longitude))
+				let predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [latitudePredicate, longitudePredicate])
+
+				fetchRequest.predicate = predicate
+				if let result = try? dataController.viewContext.fetch(fetchRequest) {
+					if !result.isEmpty {
+						photoAlbumVC.pin = result[0]
+						photoAlbumVC.photoAlbum = self.photoAlbum
+					}
+				}
+
+				photoAlbumVC.dataController = self.dataController
 				self.navigationController!.pushViewController(photoAlbumVC, animated: true)
 			}
 		}
@@ -110,6 +119,9 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, UIG
 			return
 		}
 		else if gestureRecognizer.state != UIGestureRecognizer.State.began {
+			activityView.isHidden = false
+			activityIndicator.startAnimating()
+
 			let mapCoordinate =  mapView.convert(gestureRecognizer.location(in: mapView), toCoordinateFrom: mapView)
 
 			let annotation = MKPointAnnotation()
@@ -127,8 +139,53 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, UIG
 					return
 				}
 
-				self.photos = photoSearch.photos
+				self.photoAlbum = photoSearch.photos
+				self.savePhotos(photoSearch.photos)
+
+				self.activityView.isHidden = true
+				self.activityIndicator.stopAnimating()
 			}
+		}
+	}
+
+	func savePin(_ annotation: MKPointAnnotation) {
+		let pin = Pin(context: dataController.viewContext)
+		pin.latitude = annotation.coordinate.latitude
+		pin.longitude = annotation.coordinate.longitude
+		pin.title = annotation.title!
+
+		if dataController.viewContext.hasChanges {
+			print("saving pin")
+			do {
+				try dataController.viewContext.save()
+				print("pin saved")
+			} catch {
+				print(error.localizedDescription)
+			}
+		}
+	}
+
+	func savePhotos(_ photos: Photos) {
+		for photoImage in photos.photo {
+			VirtualTouristClient.downloadImage(server: photoImage.server, id: photoImage.id, secret: photoImage.secret, format: "s", completion: { (data, error) in
+				guard let data = data else {
+					return
+				}
+
+				let photo = Photo(context: self.dataController.viewContext)
+				photo.data = data
+
+				if self.dataController.viewContext.hasChanges {
+					print("saving photo")
+					do {
+						try self.dataController.viewContext.save()
+						print("photo saved")
+					} catch {
+						print(error.localizedDescription)
+					}
+				}
+
+			})
 		}
 	}
 

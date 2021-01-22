@@ -8,6 +8,7 @@
 import Foundation
 import MapKit
 import UIKit
+import CoreData
 
 class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectionViewDataSource, UICollectionViewDelegate {
 	@IBOutlet weak var mapView: MKMapView!
@@ -18,8 +19,11 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 	@IBOutlet weak var activityView: UIView!
 	@IBOutlet weak var activityIndicator: UIActivityIndicatorView!
 
-	var coordinate: CLLocationCoordinate2D?
-	var photos: Photos?
+	var pin: Pin!
+	var photoAlbum: Photos!
+	var photos: [Photo] = []
+	var dataController: DataController!
+
 	var page = 1
 	var totalPages = 0
 
@@ -27,7 +31,7 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 		mapView.isUserInteractionEnabled = false
 		
 		let annotation = MKPointAnnotation()
-		annotation.coordinate = coordinate!
+		annotation.coordinate = CLLocationCoordinate2D(latitude: pin.latitude, longitude: pin.longitude)
 		let region = MKCoordinateRegion(center: annotation.coordinate,
 																		span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01))
 
@@ -41,15 +45,23 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 		flowLayout.minimumInteritemSpacing = space
 		flowLayout.minimumLineSpacing = space
 		flowLayout.itemSize = CGSize(width: dimensionW, height: dimensionH)
+	}
 
-		if let total = photos?.total, let pages = photos?.pages {
-			if total == "0" {
-				labelView.isHidden = false
-				newCollectionButton.isEnabled = false
+	override func viewWillAppear(_ animated: Bool) {
+		let fetchRequest: NSFetchRequest<Photo> = Photo.fetchRequest()
+		fetchRequest.predicate = NSPredicate(format: "pin == %@", pin)
+		if let result = try? dataController.viewContext.fetch(fetchRequest) {
+			photos = result
+		}
+
+		if !photos.isEmpty {
+			configNewCollectionButton(active: true)
+		} else {
+			if photoAlbum.total == "0" {
+				configNewCollectionButton(active: false)
 			} else {
-				labelView.isHidden = true
-				newCollectionButton.isEnabled = true
-				self.totalPages = pages
+				configNewCollectionButton(active: true)
+				self.totalPages = photoAlbum.pages
 			}
 		}
 
@@ -66,21 +78,24 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 		} else {
 			self.page = self.page + 1
 		}
-		guard let latitude = coordinate?.latitude, let longitude = coordinate?.longitude else {
-			return
-		}
-		VirtualTouristClient.getPhotos(latitude: latitude, longitude: longitude, page: self.page) { (photoSearch, error) in
+
+		VirtualTouristClient.getPhotos(latitude: pin.latitude, longitude: pin.longitude, page: self.page) { (photoSearch, error) in
 			guard let photoSearch = photoSearch else {
 				print(String(reflecting: error))
 				return
 			}
 
-			self.photos = photoSearch.photos
+			self.photoAlbum = photoSearch.photos
 			self.newCollectionButton.isEnabled = true
 			self.activityView.isHidden = true
 			self.activityIndicator.stopAnimating()
 			self.photoAlbumCollectionView.reloadData()
 		}
+	}
+
+	func configNewCollectionButton(active: Bool) {
+		labelView.isHidden = active
+		newCollectionButton.isEnabled = active
 	}
 
 	// MARK: - MKMapViewDelegate
@@ -102,30 +117,26 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 
 	// MARK: - UICollectionViewDataSource
 	func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-		return self.photos?.photo.count ?? 0
+		return self.photos.count
 	}
 
 	func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-		let imageSize = "s"
 		let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PhotoAlbumCollectionViewCell", for: indexPath) as! PhotoAlbumCollectionViewCell
-		let photoImage = photos?.photo[indexPath.row]
 
-		if let photoImage = photoImage {
-			VirtualTouristClient.downloadImage(server: photoImage.server, id: photoImage.id, secret: photoImage.secret, format: imageSize, completion: { (data, error) in
-				guard let data = data else {
-					return
-				}
-
-				let image = UIImage(data: data)
-				cell.imageView?.image = image
+		if !photos.isEmpty {
+			if let data = photos[indexPath.row].data {
+				cell.imageView?.image = UIImage(data: data)
 				cell.setNeedsLayout()
-			})
+			}
 		}
+
+		configNewCollectionButton(active: !photos.isEmpty)
+
 		return cell
 	}
 
 	func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath:IndexPath) {
-		photos?.photo.remove(at: indexPath.row)
+		photos.remove(at: indexPath.row)
 		photoAlbumCollectionView.reloadData()
 	}
 }
