@@ -65,6 +65,7 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 			}
 		}
 
+		print("reloading")
 		photoAlbumCollectionView.reloadData()
 	}
 
@@ -136,7 +137,16 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 	}
 
 	func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath:IndexPath) {
-		photos.remove(at: indexPath.row)
+		let photoToDelete = photos.remove(at: indexPath.row)
+		dataController.viewContext.delete(photoToDelete)
+		if dataController.viewContext.hasChanges {
+			do {
+				try dataController.viewContext.save()
+			} catch {
+				print(error.localizedDescription)
+			}
+		}
+
 		photoAlbumCollectionView.reloadData()
 	}
 }

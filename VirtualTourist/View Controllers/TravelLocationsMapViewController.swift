@@ -131,19 +131,19 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, UIG
 				annotation.title = placeMark?.locality ?? "Unknown"
 				self.mapView.addAnnotation(annotation)
 				self.savePin(annotation)
-			}
+				
+				VirtualTouristClient.getPhotos(latitude: annotation.coordinate.latitude, longitude: annotation.coordinate.longitude, page: 1) { (photoSearch, error) in
+					guard let photoSearch = photoSearch else {
+						print(String(reflecting: error))
+						return
+					}
 
-			VirtualTouristClient.getPhotos(latitude: annotation.coordinate.latitude, longitude: annotation.coordinate.longitude, page: 1) { (photoSearch, error) in
-				guard let photoSearch = photoSearch else {
-					print(String(reflecting: error))
-					return
+					self.photoAlbum = photoSearch.photos
+					self.savePhotos(photoSearch.photos)
+
+					self.activityView.isHidden = true
+					self.activityIndicator.stopAnimating()
 				}
-
-				self.photoAlbum = photoSearch.photos
-				self.savePhotos(photoSearch.photos)
-
-				self.activityView.isHidden = true
-				self.activityIndicator.stopAnimating()
 			}
 		}
 	}
@@ -158,6 +158,7 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, UIG
 			print("saving pin")
 			do {
 				try dataController.viewContext.save()
+				self.pins.append(pin)
 				print("pin saved")
 			} catch {
 				print(error.localizedDescription)
@@ -174,6 +175,7 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, UIG
 
 				let photo = Photo(context: self.dataController.viewContext)
 				photo.data = data
+				photo.pin = self.pins.last
 
 				if self.dataController.viewContext.hasChanges {
 					print("saving photo")
