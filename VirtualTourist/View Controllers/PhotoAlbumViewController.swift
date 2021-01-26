@@ -20,7 +20,6 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 	@IBOutlet weak var activityIndicator: UIActivityIndicatorView!
 
 	var pin: Pin!
-	var photoAlbum: Photos!
 	var photos: [Photo] = []
 	var dataController: DataController!
 
@@ -57,12 +56,7 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 		if !photos.isEmpty {
 			configNewCollectionButton(active: true)
 		} else {
-			if photoAlbum.total == "0" {
-				configNewCollectionButton(active: false)
-			} else {
-				configNewCollectionButton(active: true)
-				self.totalPages = photoAlbum.pages
-			}
+			configNewCollectionButton(active: false)
 		}
 
 		print("reloading")
@@ -74,10 +68,9 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 		activityView.isHidden = false
 		activityIndicator.startAnimating()
 
-		if self.page >= self.totalPages {
+		self.page = self.page + 1
+		if (self.page >= self.totalPages) && (self.totalPages > 0) {
 			self.page = 1
-		} else {
-			self.page = self.page + 1
 		}
 
 		VirtualTouristClient.getPhotos(latitude: pin.latitude, longitude: pin.longitude, page: self.page) { (photoSearch, error) in
@@ -86,11 +79,74 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 				return
 			}
 
-			self.photoAlbum = photoSearch.photos
+			guard let total = Int(photoSearch.photos.total) else {
+				return
+			}
+
+			print(String(reflecting: photoSearch))
+
+			self.activityView.isHidden = true
+			self.activityIndicator.stopAnimating()
+
+			self.totalPages = photoSearch.photos.pages
+			print(String(reflecting: photoSearch.photos.photo))
+
+			if total > 0 {
+				self.photos.removeAll()
+
+				let fetchRequest: NSFetchRequest<Photo> = Photo.fetchRequest()
+				fetchRequest.predicate = NSPredicate(format: "pin == %@", self.pin)
+				if let result = try? self.dataController.viewContext.fetch(fetchRequest) {
+					for photo in result {
+						self.dataController.viewContext.delete(photo)
+					}
+				}
+
+				if self.dataController.viewContext.hasChanges {
+					print("saving photo")
+					do {
+						try self.dataController.viewContext.save()
+						print("photo saved")
+					} catch {
+						print(error.localizedDescription)
+					}
+				}
+			}
+
+			for photoImage in photoSearch.photos.photo {
+				VirtualTouristClient.downloadImage(server: photoImage.server, id: photoImage.id, secret: photoImage.secret, format: "s", completion: { (data, error) in
+					guard let data = data else {
+						return
+					}
+
+					let photo = Photo(context: self.dataController.viewContext)
+					photo.data = data
+					photo.pin = self.pin
+
+					self.photos.append(photo)
+					print(String(reflecting: self.photos.count))
+
+					if self.dataController.viewContext.hasChanges {
+						print("saving photo")
+						do {
+							try self.dataController.viewContext.save()
+							print("photo saved")
+						} catch {
+							print(error.localizedDescription)
+						}
+					}
+				})
+			}
+
 			self.newCollectionButton.isEnabled = true
 			self.activityView.isHidden = true
 			self.activityIndicator.stopAnimating()
 			self.photoAlbumCollectionView.reloadData()
+			self.photoAlbumCollectionView.performBatchUpdates({ [weak self] in
+				let visibleItems = self?.photoAlbumCollectionView.indexPathsForVisibleItems ?? []
+				self?.photoAlbumCollectionView.reloadItems(at: visibleItems)
+			}, completion: { (_) in
+			})
 		}
 	}
 
@@ -125,6 +181,7 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 		let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PhotoAlbumCollectionViewCell", for: indexPath) as! PhotoAlbumCollectionViewCell
 
 		if !photos.isEmpty {
+			print("load photo data")
 			if let data = photos[indexPath.row].data {
 				cell.imageView?.image = UIImage(data: data)
 				cell.setNeedsLayout()

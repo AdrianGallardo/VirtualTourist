@@ -17,7 +17,6 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, UIG
 
 	var dataController: DataController!
 	var pins: [Pin] = []
-	var photoAlbum: Photos?
 	
 	override func viewDidLoad() {
 		activityView.isHidden = true
@@ -104,7 +103,6 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, UIG
 				if let result = try? dataController.viewContext.fetch(fetchRequest) {
 					if !result.isEmpty {
 						photoAlbumVC.pin = result[0]
-						photoAlbumVC.photoAlbum = self.photoAlbum
 					}
 				}
 
@@ -138,7 +136,6 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, UIG
 						return
 					}
 
-					self.photoAlbum = photoSearch.photos
 					self.savePhotos(photoSearch.photos)
 
 					self.activityView.isHidden = true
