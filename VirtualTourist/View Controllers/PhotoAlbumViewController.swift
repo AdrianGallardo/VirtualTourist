@@ -20,8 +20,8 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 	@IBOutlet weak var activityIndicator: UIActivityIndicatorView!
 
 	var pin: Pin!
-	var photos: [Photo] = []
 	var dataController: DataController!
+	var fetchedResultsController: NSFetchedResultsController<Photo>!
 
 	var page = 1
 	var totalPages = 0
@@ -47,20 +47,32 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 	}
 
 	override func viewWillAppear(_ animated: Bool) {
+		setupFetchedResultsController()
+
+//		if !photos.isEmpty {
+//			configNewCollectionButton(active: true)
+//		} else {
+//			configNewCollectionButton(active: false)
+//		}
+
+	}
+
+	override func viewDidDisappear(_ animated: Bool) {
+		super.viewDidDisappear(animated)
+		fetchedResultsController = nil
+	}
+
+	fileprivate func setupFetchedResultsController() {
 		let fetchRequest: NSFetchRequest<Photo> = Photo.fetchRequest()
 		fetchRequest.predicate = NSPredicate(format: "pin == %@", pin)
-		if let result = try? dataController.viewContext.fetch(fetchRequest) {
-			photos = result
+		fetchRequest.sortDescriptors = [NSSortDescriptor(key: "data", ascending: true)]
+		fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: dataController.viewContext, sectionNameKeyPath: nil, cacheName: nil)
+		fetchedResultsController.delegate = self
+		do {
+			try fetchedResultsController.performFetch()
+		} catch {
+			fatalError("The fetch could not be performed \(error.localizedDescription)")
 		}
-
-		if !photos.isEmpty {
-			configNewCollectionButton(active: true)
-		} else {
-			configNewCollectionButton(active: false)
-		}
-
-		print("reloading")
-		photoAlbumCollectionView.reloadData()
 	}
 
 	@IBAction func newCollection(_ sender: Any) {
@@ -83,32 +95,25 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 				return
 			}
 
-			print(String(reflecting: photoSearch))
-
 			self.activityView.isHidden = true
 			self.activityIndicator.stopAnimating()
 
 			self.totalPages = photoSearch.photos.pages
-			print(String(reflecting: photoSearch.photos.photo))
 
 			if total > 0 {
-				self.photos.removeAll()
-
 				let fetchRequest: NSFetchRequest<Photo> = Photo.fetchRequest()
 				fetchRequest.predicate = NSPredicate(format: "pin == %@", self.pin)
 				if let result = try? self.dataController.viewContext.fetch(fetchRequest) {
 					for photo in result {
 						self.dataController.viewContext.delete(photo)
-					}
-				}
 
-				if self.dataController.viewContext.hasChanges {
-					print("saving photo")
-					do {
-						try self.dataController.viewContext.save()
-						print("photo saved")
-					} catch {
-						print(error.localizedDescription)
+						if self.dataController.viewContext.hasChanges {
+							do {
+								try self.dataController.viewContext.save()
+							} catch {
+								print(error.localizedDescription)
+							}
+						}
 					}
 				}
 			}
@@ -122,15 +127,11 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 					let photo = Photo(context: self.dataController.viewContext)
 					photo.data = data
 					photo.pin = self.pin
-
-					self.photos.append(photo)
-					print(String(reflecting: self.photos.count))
+					self.dataController.viewContext.insert(photo)
 
 					if self.dataController.viewContext.hasChanges {
-						print("saving photo")
 						do {
 							try self.dataController.viewContext.save()
-							print("photo saved")
 						} catch {
 							print(error.localizedDescription)
 						}
@@ -141,12 +142,6 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 			self.newCollectionButton.isEnabled = true
 			self.activityView.isHidden = true
 			self.activityIndicator.stopAnimating()
-			self.photoAlbumCollectionView.reloadData()
-			self.photoAlbumCollectionView.performBatchUpdates({ [weak self] in
-				let visibleItems = self?.photoAlbumCollectionView.indexPathsForVisibleItems ?? []
-				self?.photoAlbumCollectionView.reloadItems(at: visibleItems)
-			}, completion: { (_) in
-			})
 		}
 	}
 
@@ -174,27 +169,23 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 
 	// MARK: - UICollectionViewDataSource
 	func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-		return self.photos.count
+		return fetchedResultsController.sections?[section].numberOfObjects ?? 0
 	}
 
 	func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
 		let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PhotoAlbumCollectionViewCell", for: indexPath) as! PhotoAlbumCollectionViewCell
 
-		if !photos.isEmpty {
-			print("load photo data")
-			if let data = photos[indexPath.row].data {
-				cell.imageView?.image = UIImage(data: data)
-				cell.setNeedsLayout()
-			}
+		let aPhoto = fetchedResultsController.object(at: indexPath)
+		if let data = aPhoto.data {
+			cell.imageView?.image = UIImage(data: data)
+			cell.setNeedsLayout()
 		}
-
-		configNewCollectionButton(active: !photos.isEmpty)
 
 		return cell
 	}
 
 	func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath:IndexPath) {
-		let photoToDelete = photos.remove(at: indexPath.row)
+		let photoToDelete = fetchedResultsController.object(at: indexPath)
 		dataController.viewContext.delete(photoToDelete)
 		if dataController.viewContext.hasChanges {
 			do {
@@ -204,7 +195,29 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 			}
 		}
 
-		photoAlbumCollectionView.reloadData()
+	}
+}
+
+extension PhotoAlbumViewController: NSFetchedResultsControllerDelegate {
+	func controllerWillChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
+		print("controllerWillChangeContent")
+	}
+
+	func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
+		print("controllerDidChangeContent")
+	}
+
+	func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
+		switch type {
+		case .insert:
+			photoAlbumCollectionView.insertItems(at: [newIndexPath!])
+			break
+		case .delete:
+			photoAlbumCollectionView.deleteItems(at: [indexPath!])
+			break
+		default:
+			break
+		}
 	}
 }
 
