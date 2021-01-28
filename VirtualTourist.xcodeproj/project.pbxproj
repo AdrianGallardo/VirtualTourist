@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		7527F69A25927F0700B30A1C /* VirtualTourist.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 7527F69825927F0700B30A1C /* VirtualTourist.xcdatamodeld */; };
+		75807B4D25C2910E003F4BAE /* Photo+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75807B4C25C2910E003F4BAE /* Photo+Extension.swift */; };
 		7593D0E12591A37100DD94ED /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7593D0E02591A37100DD94ED /* AppDelegate.swift */; };
 		7593D0E32591A37100DD94ED /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7593D0E22591A37100DD94ED /* SceneDelegate.swift */; };
 		7593D0E82591A37100DD94ED /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 7593D0E62591A37100DD94ED /* Main.storyboard */; };
@@ -41,6 +42,7 @@
 
 /* Begin PBXFileReference section */
 		7527F69925927F0700B30A1C /* VirtualTourist.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = VirtualTourist.xcdatamodel; sourceTree = "<group>"; };
+		75807B4C25C2910E003F4BAE /* Photo+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Photo+Extension.swift"; sourceTree = "<group>"; };
 		7593D0DD2591A37100DD94ED /* VirtualTourist.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VirtualTourist.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7593D0E02591A37100DD94ED /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		7593D0E22591A37100DD94ED /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -91,6 +93,7 @@
 			children = (
 				7527F69825927F0700B30A1C /* VirtualTourist.xcdatamodeld */,
 				75DCE43225AF663D00A4D445 /* DataController.swift */,
+				75807B4C25C2910E003F4BAE /* Photo+Extension.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -299,6 +302,7 @@
 			files = (
 				7593D0E12591A37100DD94ED /* AppDelegate.swift in Sources */,
 				7527F69A25927F0700B30A1C /* VirtualTourist.xcdatamodeld in Sources */,
+				75807B4D25C2910E003F4BAE /* Photo+Extension.swift in Sources */,
 				7593D1142591A43500DD94ED /* TravelLocationsMapViewController.swift in Sources */,
 				75A4A0C525A3E0AF0006A690 /* VirtualTouristClient.swift in Sources */,
 				7593D0E32591A37100DD94ED /* SceneDelegate.swift in Sources */,

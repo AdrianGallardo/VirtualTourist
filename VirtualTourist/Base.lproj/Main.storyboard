@@ -165,7 +165,6 @@
                                         <rect key="frame" x="195.66666666666666" y="278.33333333333337" width="37" height="37"/>
                                     </activityIndicatorView>
                                 </subviews>
-                                <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <constraints>
                                     <constraint firstItem="XTv-8Y-0wf" firstAttribute="centerY" secondItem="Der-op-ygS" secondAttribute="centerY" id="3ck-AB-ZDE"/>
                                     <constraint firstItem="XTv-8Y-0wf" firstAttribute="centerX" secondItem="Der-op-ygS" secondAttribute="centerX" id="vgR-u7-pO1"/>

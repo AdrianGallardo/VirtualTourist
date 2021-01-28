@@ -22,6 +22,9 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 	var pin: Pin!
 	var dataController: DataController!
 	var fetchedResultsController: NSFetchedResultsController<Photo>!
+	var blockOperations = [BlockOperation]()
+
+	var saveObserverToken: Any?
 
 	var page = 1
 	var totalPages = 0
@@ -44,17 +47,12 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 		flowLayout.minimumInteritemSpacing = space
 		flowLayout.minimumLineSpacing = space
 		flowLayout.itemSize = CGSize(width: dimensionW, height: dimensionH)
+
+		addSaveNotificationObserver()
 	}
 
 	override func viewWillAppear(_ animated: Bool) {
 		setupFetchedResultsController()
-
-//		if !photos.isEmpty {
-//			configNewCollectionButton(active: true)
-//		} else {
-//			configNewCollectionButton(active: false)
-//		}
-
 	}
 
 	override func viewDidDisappear(_ animated: Bool) {
@@ -62,20 +60,33 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 		fetchedResultsController = nil
 	}
 
+	deinit {
+		removeSaveNotificationObserver()
+	}
+
 	fileprivate func setupFetchedResultsController() {
 		let fetchRequest: NSFetchRequest<Photo> = Photo.fetchRequest()
 		fetchRequest.predicate = NSPredicate(format: "pin == %@", pin)
-		fetchRequest.sortDescriptors = [NSSortDescriptor(key: "data", ascending: true)]
+		fetchRequest.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: true)]
 		fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: dataController.viewContext, sectionNameKeyPath: nil, cacheName: nil)
 		fetchedResultsController.delegate = self
 		do {
 			try fetchedResultsController.performFetch()
+
+			if let numberOfPhotos = fetchedResultsController.sections?[0].numberOfObjects {
+				print("number of photos \(numberOfPhotos)")
+				labelView.isHidden = numberOfPhotos > 0
+				newCollectionButton.isEnabled = numberOfPhotos > 0
+			}
+
 		} catch {
 			fatalError("The fetch could not be performed \(error.localizedDescription)")
 		}
 	}
 
 	@IBAction func newCollection(_ sender: Any) {
+		let backgroundContext: NSManagedObjectContext! = dataController.backgroundContext
+
 		newCollectionButton.isEnabled = false
 		activityView.isHidden = false
 		activityIndicator.startAnimating()
@@ -85,64 +96,65 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 			self.page = 1
 		}
 
-		VirtualTouristClient.getPhotos(latitude: pin.latitude, longitude: pin.longitude, page: self.page) { (photoSearch, error) in
-			guard let photoSearch = photoSearch else {
-				print(String(reflecting: error))
-				return
+		let fetchRequest: NSFetchRequest<Photo> = Photo.fetchRequest()
+		fetchRequest.predicate = NSPredicate(format: "pin == %@", self.pin)
+		if let result = try? dataController.viewContext.fetch(fetchRequest) {
+			for photo in result {
+				dataController.viewContext.delete(photo)
+				print("photo deleted...")
+				if dataController.viewContext.hasChanges {
+					do {
+						try dataController.viewContext.save()
+						print("viewcontext saved...")
+					} catch {
+						print(error.localizedDescription)
+					}
+				}
 			}
+		}
 
-			guard let total = Int(photoSearch.photos.total) else {
-				return
-			}
+		let pinID = pin.objectID
+		backgroundContext.perform {
+			let backgroundPin = backgroundContext.object(with: pinID) as! Pin
 
-			self.activityView.isHidden = true
-			self.activityIndicator.stopAnimating()
+			VirtualTouristClient.getPhotos(latitude: backgroundPin.latitude, longitude: backgroundPin.longitude, page: self.page) { (photoSearch, error) in
+				guard let photoSearch = photoSearch else {
+					print(String(reflecting: error))
+					return
+				}
 
-			self.totalPages = photoSearch.photos.pages
+				self.totalPages = photoSearch.photos.pages
 
-			if total > 0 {
-				let fetchRequest: NSFetchRequest<Photo> = Photo.fetchRequest()
-				fetchRequest.predicate = NSPredicate(format: "pin == %@", self.pin)
-				if let result = try? self.dataController.viewContext.fetch(fetchRequest) {
-					for photo in result {
-						self.dataController.viewContext.delete(photo)
+				print(photoSearch.photos.photo.count)
+				for photoImage in photoSearch.photos.photo {
+					VirtualTouristClient.downloadImage(server: photoImage.server, id: photoImage.id, secret: photoImage.secret, format: "s", completion: { (data, error) in
+						print("downloading image...")
+						guard let data = data else {
+							return
+						}
 
-						if self.dataController.viewContext.hasChanges {
+						let photo = Photo(context: backgroundContext)
+						photo.data = data
+						photo.pin = backgroundPin
+
+						print("photo created...")
+
+						if backgroundContext.hasChanges {
 							do {
-								try self.dataController.viewContext.save()
+								try backgroundContext.save()
+								print("viewcontext saved...")
 							} catch {
 								print(error.localizedDescription)
 							}
 						}
-					}
+					})
 				}
 			}
-
-			for photoImage in photoSearch.photos.photo {
-				VirtualTouristClient.downloadImage(server: photoImage.server, id: photoImage.id, secret: photoImage.secret, format: "s", completion: { (data, error) in
-					guard let data = data else {
-						return
-					}
-
-					let photo = Photo(context: self.dataController.viewContext)
-					photo.data = data
-					photo.pin = self.pin
-					self.dataController.viewContext.insert(photo)
-
-					if self.dataController.viewContext.hasChanges {
-						do {
-							try self.dataController.viewContext.save()
-						} catch {
-							print(error.localizedDescription)
-						}
-					}
-				})
-			}
-
-			self.newCollectionButton.isEnabled = true
-			self.activityView.isHidden = true
-			self.activityIndicator.stopAnimating()
 		}
+
+		self.newCollectionButton.isEnabled = true
+		self.activityView.isHidden = true
+		self.activityIndicator.stopAnimating()
 	}
 
 	func configNewCollectionButton(active: Bool) {
@@ -194,29 +206,65 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 				print(error.localizedDescription)
 			}
 		}
-
 	}
 }
 
+// MARK: - NSFetchedResultsControllerDelegate
 extension PhotoAlbumViewController: NSFetchedResultsControllerDelegate {
 	func controllerWillChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
 		print("controllerWillChangeContent")
+//		blockOperations = [BlockOperation]()
 	}
 
 	func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
 		print("controllerDidChangeContent")
+		photoAlbumCollectionView.performBatchUpdates {
+			for operation in self.blockOperations {
+				print("start")
+				operation.start()
+			}
+		} completion: { (completed) in	print("Operation finished")}
 	}
 
 	func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
 		switch type {
 		case .insert:
-			photoAlbumCollectionView.insertItems(at: [newIndexPath!])
+			print("insert")
+			blockOperations.append(BlockOperation(block: {
+				self.photoAlbumCollectionView.insertItems(at: [newIndexPath!])
+			}))
 			break
 		case .delete:
-			photoAlbumCollectionView.deleteItems(at: [indexPath!])
+			print("delete")
+			blockOperations.append(BlockOperation(block: {
+				self.photoAlbumCollectionView.deleteItems(at: [indexPath!])
+			}))
 			break
 		default:
 			break
+		}
+	}
+}
+
+extension PhotoAlbumViewController {
+	func addSaveNotificationObserver() {
+		removeSaveNotificationObserver()
+		saveObserverToken = NotificationCenter.default.addObserver(forName: .NSManagedObjectContextObjectsDidChange, object: dataController.viewContext, queue: nil, using: handleSaveNotification(notification:))
+	}
+
+	func removeSaveNotificationObserver() {
+		if let token = saveObserverToken {
+			NotificationCenter.default.removeObserver(token)
+		}
+	}
+
+	fileprivate func reloadPhotoAlbum() {
+		photoAlbumCollectionView.reloadData()
+	}
+
+	func handleSaveNotification(notification: Notification) {
+		DispatchQueue.main.async {
+			self.reloadPhotoAlbum()
 		}
 	}
 }

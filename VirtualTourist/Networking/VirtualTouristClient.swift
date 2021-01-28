@@ -37,17 +37,11 @@ class VirtualTouristClient {
 	//MARK: - GET Task
 	class func taskForGETRequest<ResponseType: Decodable>(url: URL?, response: ResponseType.Type, completion: @escaping (ResponseType?, Error?) -> Void) {
 
-		print("taskForGETRequest")
-
 		guard let url = url else {
 			return
 		}
 
-		print("taskForGETRequest: url -> " + String(reflecting: url))
-
 		let task = URLSession.shared.dataTask(with: url) { (data, response, error) in
-
-			print("taskForGETRequest: data -> " + String(data: data!, encoding: .utf8)!)
 
 			guard let data = data else {
 				DispatchQueue.main.async {
@@ -58,13 +52,11 @@ class VirtualTouristClient {
 
 			let decoder = JSONDecoder()
 			do {
-				print("decode")
 				let responseObject = try decoder.decode(ResponseType.self, from: data)
 				DispatchQueue.main.async {
 					completion(responseObject, nil)
 				}
 			} catch {
-				print("client taskForGETRequest: " +  error.localizedDescription)
 				DispatchQueue.main.async {
 					completion(nil, error)
 				}
@@ -79,7 +71,7 @@ class VirtualTouristClient {
 		static var apiKey = "c5b24e42ffd0cb3602dde89411e584e9"
 		static let apiUrl = "https://api.flickr.com/services/rest/"
 		static let photoUrl = "https://live.staticflickr.com/"
-		static let photosPerPage = 72
+		static let photosPerPage = 60
 		static let searchRadiusKM = 1
 
 		case getPhotos(Double, Double, Int)
