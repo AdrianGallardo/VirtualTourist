@@ -29,6 +29,7 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 	var page = 1
 	var totalPages = 0
 
+//	MARK: - Lifecycle
 	override func viewDidLoad() {
 		mapView.isUserInteractionEnabled = false
 		
@@ -64,6 +65,7 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 		removeSaveNotificationObserver()
 	}
 
+//	MARK: - Setup FetchResultsController
 	fileprivate func setupFetchedResultsController() {
 		let fetchRequest: NSFetchRequest<Photo> = Photo.fetchRequest()
 		fetchRequest.predicate = NSPredicate(format: "pin == %@", pin)
@@ -84,14 +86,24 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 		}
 	}
 
+//	MARK: - New Collection Action
+	fileprivate func showActivityIndicator(_ active: Bool) {
+		newCollectionButton.isEnabled = !active
+		activityView.isHidden = !active
+		if active {
+			activityIndicator.startAnimating()
+		} else {
+			activityIndicator.stopAnimating()
+		}
+	}
+
 	@IBAction func newCollection(_ sender: Any) {
 		let backgroundContext: NSManagedObjectContext! = dataController.backgroundContext
 
-		newCollectionButton.isEnabled = false
-		activityView.isHidden = false
-		activityIndicator.startAnimating()
+		showActivityIndicator(true)
 
 		self.page = self.page + 1
+		// If asked page is greater than the totalPages, reset the variable and ask for page 1
 		if (self.page >= self.totalPages) && (self.totalPages > 0) {
 			self.page = 1
 		}
@@ -101,11 +113,9 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 		if let result = try? dataController.viewContext.fetch(fetchRequest) {
 			for photo in result {
 				dataController.viewContext.delete(photo)
-				print("photo deleted...")
 				if dataController.viewContext.hasChanges {
 					do {
 						try dataController.viewContext.save()
-						print("viewcontext saved...")
 					} catch {
 						print(error.localizedDescription)
 					}
@@ -128,7 +138,6 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 				print(photoSearch.photos.photo.count)
 				for photoImage in photoSearch.photos.photo {
 					VirtualTouristClient.downloadImage(server: photoImage.server, id: photoImage.id, secret: photoImage.secret, format: "s", completion: { (data, error) in
-						print("downloading image...")
 						guard let data = data else {
 							return
 						}
@@ -137,12 +146,9 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 						photo.data = data
 						photo.pin = backgroundPin
 
-						print("photo created...")
-
 						if backgroundContext.hasChanges {
 							do {
 								try backgroundContext.save()
-								print("viewcontext saved...")
 							} catch {
 								print(error.localizedDescription)
 							}
@@ -150,11 +156,12 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 					})
 				}
 			}
-		}
 
-		self.newCollectionButton.isEnabled = true
-		self.activityView.isHidden = true
-		self.activityIndicator.stopAnimating()
+			DispatchQueue.main.async {
+				self.showActivityIndicator(false)
+			}
+
+		}
 	}
 
 	func configNewCollectionButton(active: Bool) {
@@ -212,15 +219,12 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 // MARK: - NSFetchedResultsControllerDelegate
 extension PhotoAlbumViewController: NSFetchedResultsControllerDelegate {
 	func controllerWillChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
-		print("controllerWillChangeContent")
-//		blockOperations = [BlockOperation]()
+		blockOperations = [BlockOperation]()
 	}
 
 	func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
-		print("controllerDidChangeContent")
 		photoAlbumCollectionView.performBatchUpdates {
 			for operation in self.blockOperations {
-				print("start")
 				operation.start()
 			}
 		} completion: { (completed) in	print("Operation finished")}
@@ -245,7 +249,7 @@ extension PhotoAlbumViewController: NSFetchedResultsControllerDelegate {
 		}
 	}
 }
-
+// MARK: - Observe notifications
 extension PhotoAlbumViewController {
 	func addSaveNotificationObserver() {
 		removeSaveNotificationObserver()

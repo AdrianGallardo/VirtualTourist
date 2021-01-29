@@ -17,7 +17,8 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, UIG
 
 	var dataController: DataController!
 	var pins: [Pin] = []
-	
+
+// MARK: - Lifecycle
 	override func viewDidLoad() {
 		activityView.isHidden = true
 		activityIndicator.stopAnimating()
@@ -36,6 +37,13 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, UIG
 		loadPins()
 	}
 
+	override func viewWillDisappear(_ animated: Bool) {
+		print("saving region to User Defaults")
+		let initialRegion = [mapView.region.center.latitude, mapView.region.center.longitude, mapView.region.span.latitudeDelta, mapView.region.span.longitudeDelta]
+		UserDefaults.standard.set(initialRegion, forKey: "initialRegion")
+	}
+
+// MARK: - Load methods
 	func loadPins() {
 		let feechRequest: NSFetchRequest<Pin> = Pin.fetchRequest()
 		if let result = try? dataController.viewContext.fetch(feechRequest) {
@@ -53,16 +61,54 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, UIG
 		}
 	}
 
-	override func viewWillDisappear(_ animated: Bool) {
-		print("saving region to User Defaults")
-		let initialRegion = [mapView.region.center.latitude, mapView.region.center.longitude, mapView.region.span.latitudeDelta, mapView.region.span.longitudeDelta]
-		UserDefaults.standard.set(initialRegion, forKey: "initialRegion")
-	}
-
 	func setInitialRegion(_ initialRegion: [Double]) -> MKCoordinateRegion {
 		let center = CLLocationCoordinate2D(latitude: initialRegion[0], longitude: initialRegion[1])
 		let span = MKCoordinateSpan(latitudeDelta: initialRegion[2], longitudeDelta: initialRegion[3])
 		return MKCoordinateRegion(center: center, span: span)
+	}
+
+	// MARK: - Save methods
+	func savePin(_ annotation: MKPointAnnotation) {
+		let pin = Pin(context: dataController.viewContext)
+		pin.latitude = annotation.coordinate.latitude
+		pin.longitude = annotation.coordinate.longitude
+		pin.title = annotation.title!
+
+		if dataController.viewContext.hasChanges {
+			print("saving pin")
+			do {
+				try dataController.viewContext.save()
+				self.pins.append(pin)
+				print("pin saved")
+			} catch {
+				print(error.localizedDescription)
+			}
+		}
+	}
+
+	func savePhotos(_ photos: Photos) {
+		for photoImage in photos.photo {
+			VirtualTouristClient.downloadImage(server: photoImage.server, id: photoImage.id, secret: photoImage.secret, format: "s", completion: { (data, error) in
+				guard let data = data else {
+					return
+				}
+
+				let photo = Photo(context: self.dataController.viewContext)
+				photo.data = data
+				photo.pin = self.pins.last
+
+				if self.dataController.viewContext.hasChanges {
+					print("saving photo")
+					do {
+						try self.dataController.viewContext.save()
+						print("photo saved")
+					} catch {
+						print(error.localizedDescription)
+					}
+				}
+
+			})
+		}
 	}
 
 	// MARK: - MKMapViewDelegate
@@ -142,49 +188,6 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, UIG
 					self.activityIndicator.stopAnimating()
 				}
 			}
-		}
-	}
-
-	func savePin(_ annotation: MKPointAnnotation) {
-		let pin = Pin(context: dataController.viewContext)
-		pin.latitude = annotation.coordinate.latitude
-		pin.longitude = annotation.coordinate.longitude
-		pin.title = annotation.title!
-
-		if dataController.viewContext.hasChanges {
-			print("saving pin")
-			do {
-				try dataController.viewContext.save()
-				self.pins.append(pin)
-				print("pin saved")
-			} catch {
-				print(error.localizedDescription)
-			}
-		}
-	}
-
-	func savePhotos(_ photos: Photos) {
-		for photoImage in photos.photo {
-			VirtualTouristClient.downloadImage(server: photoImage.server, id: photoImage.id, secret: photoImage.secret, format: "s", completion: { (data, error) in
-				guard let data = data else {
-					return
-				}
-
-				let photo = Photo(context: self.dataController.viewContext)
-				photo.data = data
-				photo.pin = self.pins.last
-
-				if self.dataController.viewContext.hasChanges {
-					print("saving photo")
-					do {
-						try self.dataController.viewContext.save()
-						print("photo saved")
-					} catch {
-						print(error.localizedDescription)
-					}
-				}
-
-			})
 		}
 	}
 

@@ -71,7 +71,7 @@ class VirtualTouristClient {
 		static var apiKey = "c5b24e42ffd0cb3602dde89411e584e9"
 		static let apiUrl = "https://api.flickr.com/services/rest/"
 		static let photoUrl = "https://live.staticflickr.com/"
-		static let photosPerPage = 60
+		static let photosPerPage = 30
 		static let searchRadiusKM = 1
 
 		case getPhotos(Double, Double, Int)
